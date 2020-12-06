@@ -28,16 +28,22 @@ def get_images_and_labels():
                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]), ])
     train_set = []
     test_set = []
-    #for i in os.listdir(dir + "train_segmented_black_white"):
-    #    name = os.path.join(dir + "train_segmented_black_white", i)
-    #    with Image.open(name) as img:
-    #        train_set.append(tfms(Image.open(name)).unsqueeze(0))
+    labels_train = pd.read_csv(dir + "train_labels.csv")
+    labels_test = pd.read_csv(dir + "test_labels.csv")
+    for i in os.listdir(dir + "train_segmented_black_white"):
+        name = os.path.join(dir + "train_segmented_black_white", i)
+        a = int(labels_train[(labels_train == i).any(axis=1)].type)
+        with Image.open(name) as img:
+            train_set.append([tfms(Image.open(name)).unsqueeze(0)[0], a])
 
     for i in os.listdir(dir + "test_segmented_black_white"):
         name = os.path.join(dir + "test_segmented_black_white", i)
+        a = int(labels_test[(labels_test == i).any(axis=1)].type)
         with Image.open(name) as img:
-            test_set.append(tfms(Image.open(name)).unsqueeze(0))
-    labels_train = pd.read_csv(dir + "train_labels.csv")
-    labels_test = pd.read_csv(dir + "test_labels.csv")
+                test_set.append([tfms(Image.open(name)).unsqueeze(0)[0], a])
+
+    import random
+    random.shuffle(train_set)
+    random.shuffle(test_set)
     haircuts = pd.read_csv(dir + "haircuts.csv")
-    return Type(test_set, labels_test, haircuts), Type(test_set, labels_test, haircuts)
+    return Type(train_set, labels_train, haircuts), Type(test_set, labels_test, haircuts)
